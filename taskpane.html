@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gem's Email Assistant</title>
+  <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f8f9fa;
+      color: #1a1a1a;
+      font-size: 13px;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      background: #1A5276;
+      color: white;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 600; font-size: 12px;
+      flex-shrink: 0;
+    }
+
+    .header-text h1 { font-size: 14px; font-weight: 600; }
+    .header-text p { font-size: 11px; opacity: 0.75; }
+
+    .body { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+
+    .email-preview {
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 10px 12px;
+    }
+
+    .email-preview .from { font-size: 11px; color: #666; margin-bottom: 3px; }
+    .email-preview .subject { font-size: 13px; font-weight: 600; color: #1a1a1a; margin-bottom: 6px; }
+    .email-preview .snippet { font-size: 12px; color: #555; line-height: 1.5; max-height: 60px; overflow: hidden; }
+
+    .tone-row { display: flex; gap: 6px; flex-wrap: wrap; }
+    .tone-chip {
+      font-size: 11px; padding: 4px 10px;
+      border-radius: 20px; border: 1px solid #ccc;
+      background: white; cursor: pointer; color: #444;
+      transition: all 0.1s;
+    }
+    .tone-chip.active { background: #1A5276; color: white; border-color: #1A5276; }
+    .tone-chip:hover:not(.active) { border-color: #1A5276; color: #1A5276; }
+
+    .generate-btn {
+      width: 100%;
+      padding: 11px;
+      background: #1A5276;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .generate-btn:hover { opacity: 0.88; }
+    .generate-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .draft-box {
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .draft-box-header {
+      background: #eaf3fb;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #d0e8f5;
+    }
+    .draft-box-header span { font-size: 11px; font-weight: 600; color: #1A5276; }
+
+    .draft-actions { display: flex; gap: 6px; }
+    .draft-actions button {
+      font-size: 11px; padding: 3px 9px;
+      border-radius: 5px; border: 1px solid #ccc;
+      background: white; cursor: pointer; color: #333;
+    }
+    .draft-actions button:hover { background: #f0f0f0; }
+    .draft-actions button.primary { background: #1A5276; color: white; border-color: #1A5276; }
+    .draft-actions button.primary:hover { opacity: 0.88; }
+
+    #draftText {
+      width: 100%; min-height: 180px;
+      padding: 10px 12px;
+      border: none; outline: none; resize: vertical;
+      font-family: inherit; font-size: 12px;
+      line-height: 1.65; color: #1a1a1a;
+    }
+
+    .status {
+      font-size: 11px; color: #666; text-align: center; padding: 4px 0;
+      min-height: 20px;
+    }
+
+    .loading-dots::after {
+      content: '';
+      animation: dots 1s steps(3, end) infinite;
+    }
+    @keyframes dots { 0%,100%{content:''} 33%{content:'.'} 66%{content:'..'} }
+
+    .api-key-section {
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 12px;
+    }
+    .api-key-section label { font-size: 11px; color: #555; display: block; margin-bottom: 5px; font-weight: 600; }
+    .api-key-section input {
+      width: 100%; padding: 7px 10px;
+      border: 1px solid #ccc; border-radius: 6px;
+      font-size: 12px; font-family: monospace;
+      color: #333;
+    }
+    .api-key-section input:focus { outline: none; border-color: #1A5276; }
+    .api-key-section .save-key-btn {
+      margin-top: 7px; width: 100%;
+      padding: 7px; background: #1A5276; color: white;
+      border: none; border-radius: 6px; cursor: pointer;
+      font-size: 12px; font-weight: 600;
+    }
+    .api-key-section .save-key-btn:hover { opacity: 0.88; }
+    .key-hint { font-size: 10px; color: #888; margin-top: 4px; }
+
+    .section-label { font-size: 11px; font-weight: 600; color: #555; }
+
+    .no-email {
+      text-align: center; padding: 24px 12px;
+      color: #888; font-size: 12px; line-height: 1.6;
+    }
+    .no-email strong { display: block; font-size: 14px; color: #555; margin-bottom: 6px; }
+
+    .copied-flash { color: #1e8449 !important; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="avatar">GD</div>
+  <div class="header-text">
+    <h1>Gem's Email Assistant</h1>
+    <p>East Coast Canning &amp; Printing</p>
+  </div>
+</div>
+
+<div class="body" id="mainBody">
+  <div class="no-email" id="noEmailMsg">
+    <strong>Open an email to get started</strong>
+    Select any email in your inbox and a draft reply will be ready to generate in seconds.
+  </div>
+</div>
+
+<script>
+const GEM_SYSTEM_PROMPT = `You are drafting reply emails for Gemma Duff, Head of Customer Team at East Coast Canning & Printing (ECCP) in Australia.
+
+ABOUT GEMMA & ECCP:
+- Gemma is Head of Customer Team and Queensland Customer Partner
+- ECCP offers digitally printed cans (sleek and classic), can filling services, mobile filling
+- MOQ: 389 classic cans or 509 sleek cans
+- 375ml cans: $0.73 each for runs under 2,000 units (all finishes included)
+- Free freight to metro Sydney/Melbourne and many other locations
+- 2-week turnaround on digital printed cans
+- CODI machine for filling (doesn't handle carbonation — partners do inline carbonation)
+- Trade account sign-up: eastcoastcanning.applyeasy.com.au/Credit/introduction
+- Order portal: order.eastcoastcanning.com.au
+- Calendly: calendly.com/gemma-eastcoastcanning
+
+GEM'S WRITING STYLE (learned from her real sent emails):
+- Casual, warm, conversational — like texting a close business contact
+- SHORT and punchy. No waffle. Get straight to the point.
+- Uses first names always
+- Greetings: "Hi [name]," or "Hey [name]," or "Gday [name],"
+- Common expressions: "Fab!", "Ah fab", "Love to chat", "Just bumping this", "Happy to help"
+- Occasionally uses 😊 emoji
+- Sometimes refers to competitors helpfully (e.g. Cactus Canning for things she can't do)
+- Often asks questions at the end to keep conversation moving
+- Signs off: "Cheers, Gem" ALWAYS (never "Gemma", never "Kind regards", never "Best")
+- Signature block: Gemma Duff | Head of Customer Team | 1300 494 994 | 0491 203 767 | eastcoastcanning.com.au
+
+TONE VARIATIONS:
+- Natural (default): casual, warm, Gem's real voice
+- Formal: slightly more professional but still warm, same sign-off
+- Brief: 1-3 sentences max, Cheers Gem, signature
+- Follow-up: assumes she's chasing a previous email, polite but direct
+
+RULES:
+- Write ONLY the email body from greeting to signature
+- Never add subject lines or preamble
+- Never write "I hope this email finds you well" or any filler
+- Always end with Cheers, Gem + signature
+- If you don't know a specific detail, write a plausible response and note [CHECK THIS]`;
+
+let currentTone = "natural";
+let currentEmail = null;
+
+Office.onReady(() => {
+  loadApiKey();
+  loadCurrentEmail();
+});
+
+function loadApiKey() {
+  const key = localStorage.getItem('gem_api_key');
+  if (key) {
+    document.getElementById('apiKeyInput') && (document.getElementById('apiKeyInput').value = key);
+  }
+}
+
+function saveApiKey() {
+  const key = document.getElementById('apiKeyInput').value.trim();
+  if (!key) return;
+  localStorage.setItem('gem_api_key', key);
+  renderMain();
+}
+
+function getApiKey() {
+  return localStorage.getItem('gem_api_key') || '';
+}
+
+function loadCurrentEmail() {
+  if (!Office.context || !Office.context.mailbox) {
+    renderNoOffice();
+    return;
+  }
+  const item = Office.context.mailbox.item;
+  if (!item) {
+    renderNoEmail();
+    return;
+  }
+
+  item.body.getAsync(Office.CoercionType.Text, (bodyResult) => {
+    const from = item.from ? (item.from.displayName || item.from.emailAddress) : 'Unknown';
+    const fromEmail = item.from ? item.from.emailAddress : '';
+    const subject = item.subject || '(no subject)';
+    const body = bodyResult.value || '';
+
+    currentEmail = { from, fromEmail, subject, body };
+    renderMain();
+  });
+}
+
+function renderNoOffice() {
+  document.getElementById('mainBody').innerHTML = `
+    <div class="no-email">
+      <strong>Outlook not detected</strong>
+      This add-in must be opened from within Outlook. Open an email and click "Gem's Assistant" in the ribbon.
+    </div>`;
+}
+
+function renderNoEmail() {
+  document.getElementById('mainBody').innerHTML = `
+    <div class="no-email">
+      <strong>Open an email to get started</strong>
+      Select any email in your inbox and click "Generate Draft" to create a reply in your voice.
+    </div>`;
+}
+
+function renderMain() {
+  const hasKey = !!getApiKey();
+  const body = document.getElementById('mainBody');
+
+  body.innerHTML = `
+    ${!hasKey ? `
+    <div class="api-key-section">
+      <label>Anthropic API Key</label>
+      <input type="password" id="apiKeyInput" placeholder="sk-ant-..." />
+      <button class="save-key-btn" onclick="saveApiKey()">Save & Continue</button>
+      <div class="key-hint">Get your key at console.anthropic.com — stored locally on your device only.</div>
+    </div>` : ''}
+
+    ${currentEmail ? `
+    <div class="email-preview">
+      <div class="from">From: ${esc(currentEmail.from)}</div>
+      <div class="subject">${esc(currentEmail.subject)}</div>
+      <div class="snippet">${esc(currentEmail.body.substring(0, 200))}${currentEmail.body.length > 200 ? '...' : ''}</div>
+    </div>` : `
+    <div class="no-email">
+      <strong>No email selected</strong>
+      Open an email to generate a draft reply.
+    </div>`}
+
+    <div>
+      <div class="section-label" style="margin-bottom:6px;">Tone</div>
+      <div class="tone-row">
+        <button class="tone-chip ${currentTone==='natural'?'active':''}" onclick="setTone('natural',this)">Natural (Gem)</button>
+        <button class="tone-chip ${currentTone==='formal'?'active':''}" onclick="setTone('formal',this)">More formal</button>
+        <button class="tone-chip ${currentTone==='brief'?'active':''}" onclick="setTone('brief',this)">Super brief</button>
+        <button class="tone-chip ${currentTone==='followup'?'active':''}" onclick="setTone('followup',this)">Follow-up</button>
+      </div>
+    </div>
+
+    <button class="generate-btn" id="generateBtn" onclick="generateDraft()" ${!currentEmail || !hasKey ? 'disabled' : ''}>
+      ✦ Generate Draft Reply
+    </button>
+
+    <div class="status" id="statusLine"></div>
+
+    <div class="draft-box" id="draftBox" style="display:none;">
+      <div class="draft-box-header">
+        <span>AI Draft</span>
+        <div class="draft-actions">
+          <button onclick="regenerate()">↺ Redo</button>
+          <button onclick="copyDraft(this)">Copy</button>
+          <button class="primary" onclick="insertDraft()">Insert into Reply</button>
+        </div>
+      </div>
+      <textarea id="draftText" spellcheck="true"></textarea>
+    </div>
+
+    ${hasKey ? `
+    <details style="margin-top:4px;">
+      <summary style="font-size:11px; color:#888; cursor:pointer;">Change API key</summary>
+      <div class="api-key-section" style="margin-top:6px;">
+        <label>Anthropic API Key</label>
+        <input type="password" id="apiKeyInput" value="${getApiKey()}" />
+        <button class="save-key-btn" onclick="saveApiKey()">Update Key</button>
+      </div>
+    </details>` : ''}
+  `;
+}
+
+function setTone(tone, el) {
+  currentTone = tone;
+  document.querySelectorAll('.tone-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+async function generateDraft() {
+  if (!currentEmail) return;
+  const apiKey = getApiKey();
+  if (!apiKey) { alert('Please enter your Anthropic API key first.'); return; }
+
+  const btn = document.getElementById('generateBtn');
+  const status = document.getElementById('statusLine');
+  const draftBox = document.getElementById('draftBox');
+
+  btn.disabled = true;
+  btn.textContent = 'Generating…';
+  status.innerHTML = '<span class="loading-dots">Drafting reply</span>';
+  draftBox.style.display = 'none';
+
+  const toneInstructions = {
+    natural: "Use Gem's natural casual warm style.",
+    formal: "Use a slightly more professional tone, but still warm and sign off as Cheers Gem.",
+    brief: "Keep it to 1-3 sentences maximum. Very short and punchy. Still Cheers Gem sign-off.",
+    followup: "This is a follow-up / chaser email. Gem is politely bumping a previous conversation. Keep it brief and friendly."
+  };
+
+  const userPrompt = `Draft a reply to this email.
+
+Tone instruction: ${toneInstructions[currentTone]}
+
+From: ${currentEmail.from} <${currentEmail.fromEmail}>
+Subject: ${currentEmail.subject}
+
+Email content:
+${currentEmail.body.substring(0, 2000)}`;
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 600,
+        system: GEM_SYSTEM_PROMPT,
+        messages: [{ role: 'user', content: userPrompt }]
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.error) throw new Error(data.error.message);
+
+    const draft = data.content?.find(b => b.type === 'text')?.text || '';
+    document.getElementById('draftText').value = draft.trim();
+    draftBox.style.display = 'block';
+    status.textContent = 'Draft ready — review and edit before sending.';
+    btn.textContent = '✦ Generate Draft Reply';
+    btn.disabled = false;
+
+  } catch (err) {
+    status.textContent = 'Error: ' + (err.message || 'Something went wrong. Check your API key.');
+    btn.textContent = '✦ Generate Draft Reply';
+    btn.disabled = false;
+  }
+}
+
+function regenerate() { generateDraft(); }
+
+function copyDraft(btn) {
+  const text = document.getElementById('draftText').value;
+  if (!text) return;
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = '✓ Copied!';
+    btn.classList.add('copied-flash');
+    setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied-flash'); }, 1500);
+  });
+}
+
+function insertDraft() {
+  const text = document.getElementById('draftText').value;
+  if (!text || !Office.context.mailbox.item) return;
+
+  Office.context.mailbox.item.displayReplyForm({
+    htmlBody: text.replace(/\n/g, '<br>')
+  });
+}
+</script>
+</body>
+</html>
