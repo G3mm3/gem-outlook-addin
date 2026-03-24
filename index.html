@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plain Sailing — Operational Intelligence</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<div class="app-wrapper">
+
+  <!-- ============ HEADER ============ -->
+  <header class="app-header">
+    <div class="header-brand">
+      <div class="brand-logo">⛵</div>
+      <div class="brand-text">
+        <h1>Plain Sailing</h1>
+        <p>Operational Intelligence</p>
+      </div>
+    </div>
+
+    <div class="header-center">
+      <div class="venue-name" id="venueName">The Anchor Bar & Kitchen</div>
+      <div class="venue-meta" id="venueMeta">Surry Hills, Sydney &nbsp;·&nbsp; Service in progress</div>
+    </div>
+
+    <div class="header-right">
+      <div class="live-dot" title="Live data"></div>
+      <div class="header-time">
+        <div class="clock" id="clock">--:--</div>
+        <div class="date-display" id="dateDisplay">--</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============ WEATHER BANNER ============ -->
+  <div class="weather-banner">
+    <div class="weather-today">
+      <div class="weather-icon-lg" id="todayWeatherIcon">☀️</div>
+      <div class="weather-today-info">
+        <h3 id="todayTemp">24°</h3>
+        <p id="todayDesc">Clear &amp; sunny</p>
+        <p id="todayWind" style="margin-top:2px;">SE 12 km/h · Humidity 58%</p>
+      </div>
+    </div>
+
+    <div class="weather-forecast" id="weatherForecast">
+      <!-- Populated by JS -->
+    </div>
+
+    <div class="weather-impact">
+      <div class="weather-impact-title">Expected foot traffic</div>
+      <div id="trafficBars">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ KPI ROW ============ -->
+  <div class="grid-4 section-gap">
+    <div class="kpi-card" style="--accent-color: var(--teal);">
+      <div class="kpi-label">⚡ Revenue Today</div>
+      <div class="kpi-value">$6,842</div>
+      <span class="kpi-change up">↑ 14% vs last Tue</span>
+      <div class="kpi-sub">Target: $7,000 — 97.7% achieved</div>
+    </div>
+
+    <div class="kpi-card" style="--accent-color: var(--gold);">
+      <div class="kpi-label">👥 Covers</div>
+      <div class="kpi-value">187</div>
+      <span class="kpi-change up">↑ 23 covers</span>
+      <div class="kpi-sub">Lunch: 82 &nbsp;·&nbsp; Dinner: 105</div>
+    </div>
+
+    <div class="kpi-card" style="--accent-color: var(--green);">
+      <div class="kpi-label">💼 Labor Cost</div>
+      <div class="kpi-value">26%</div>
+      <span class="kpi-change up">↓ 2pts vs last week</span>
+      <div class="kpi-sub">$1,779 in wages · 9 staff on</div>
+    </div>
+
+    <div class="kpi-card" style="--accent-color: var(--amber);">
+      <div class="kpi-label">🍽 Avg Spend / Cover</div>
+      <div class="kpi-value">$36.59</div>
+      <span class="kpi-change up">↑ $3.20 vs MTD avg</span>
+      <div class="kpi-sub">Food: $24.10 &nbsp;·&nbsp; Bev: $12.49</div>
+    </div>
+  </div>
+
+  <!-- ============ MAIN GRID (Menu + Staffing) ============ -->
+  <div class="grid-main section-gap">
+
+    <!-- LEFT: Menu Wins -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="icon">🏆</span> Menu Wins</div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <div class="card-badge badge-gold">Today's service</div>
+          <div class="tabs" style="margin-bottom:0;flex-shrink:0;">
+            <div class="tab active" onclick="switchMenuTab('revenue', this)">Revenue</div>
+            <div class="tab" onclick="switchMenuTab('qty', this)">Qty Sold</div>
+            <div class="tab" onclick="switchMenuTab('margin', this)">Margin</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Revenue tab -->
+      <div class="tab-panel active" id="menu-tab-revenue">
+        <div id="menuListRevenue"></div>
+      </div>
+
+      <!-- Qty Sold tab -->
+      <div class="tab-panel" id="menu-tab-qty">
+        <div id="menuListQty"></div>
+      </div>
+
+      <!-- Margin tab -->
+      <div class="tab-panel" id="menu-tab-margin">
+        <div id="menuListMargin"></div>
+      </div>
+
+      <div class="divider"></div>
+      <div class="chart-wrap-sm">
+        <canvas id="menuChart"></canvas>
+      </div>
+    </div>
+
+    <!-- RIGHT: Staffing -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="icon">👩‍🍳</span> Staffing &amp; Labour</div>
+        <div class="card-badge badge-teal">Live roster</div>
+      </div>
+
+      <div class="staff-summary">
+        <div class="staff-kpi">
+          <div class="staff-kpi-val">9</div>
+          <div class="staff-kpi-label">On shift</div>
+        </div>
+        <div class="staff-kpi">
+          <div class="staff-kpi-val text-gold">26%</div>
+          <div class="staff-kpi-label">Labour %</div>
+        </div>
+        <div class="staff-kpi">
+          <div class="staff-kpi-val">$1,779</div>
+          <div class="staff-kpi-label">Wage cost</div>
+        </div>
+      </div>
+
+      <div class="chart-wrap-sm" style="margin-bottom:12px;">
+        <canvas id="laborChart"></canvas>
+      </div>
+
+      <div class="section-label">Current roster</div>
+      <div class="roster-list" id="rosterList"></div>
+    </div>
+  </div>
+
+  <!-- ============ BOTTOM GRID (Trending + Reddit + Suppliers) ============ -->
+  <div class="grid-bottom section-gap">
+
+    <!-- Trending Items -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="icon">🔥</span> Trending Items</div>
+        <div class="card-badge badge-amber">This week</div>
+      </div>
+      <div class="trend-grid" id="trendGrid"></div>
+    </div>
+
+    <!-- Reddit / Social Mentions -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="icon">💬</span> Social Mentions</div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <span id="mentionCount" class="card-badge badge-teal">7 mentions</span>
+          <span id="sentimentScore" class="card-badge badge-green">Positive</span>
+        </div>
+      </div>
+      <div class="mention-feed" id="mentionFeed"></div>
+    </div>
+
+    <!-- Supplier Deals -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="icon">📦</span> Supplier Deals</div>
+        <span class="card-badge badge-gold" id="newDealsCount">3 new</span>
+      </div>
+      <div class="deals-feed" id="dealsFeed"></div>
+      <button class="submit-deal-btn" onclick="openDealModal()">
+        <span>+</span> Submit a new deal (suppliers)
+      </button>
+    </div>
+
+  </div>
+
+</div><!-- /app-wrapper -->
+
+<!-- ============ SUPPLIER DEAL MODAL ============ -->
+<div class="modal-overlay" id="dealModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">📦 Submit a Supplier Deal</div>
+      <button class="modal-close" onclick="closeDealModal()">✕</button>
+    </div>
+
+    <form id="dealForm" onsubmit="submitDeal(event)">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Company Name</label>
+          <input class="form-input" type="text" id="dealCompany" placeholder="e.g. Sydney Wine Co." required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Rep Name</label>
+          <input class="form-input" type="text" id="dealRep" placeholder="e.g. James O'Brien">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Deal Title</label>
+        <input class="form-input" type="text" id="dealTitle" placeholder="e.g. 20% off all Shiraz — March special" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Details</label>
+        <textarea class="form-textarea" id="dealDesc" placeholder="Describe the offer, quantities, conditions..."></textarea>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Category</label>
+          <select class="form-select" id="dealCategory">
+            <option value="Wine">Wine</option>
+            <option value="Beer &amp; Cider">Beer &amp; Cider</option>
+            <option value="Spirits">Spirits</option>
+            <option value="Produce">Produce</option>
+            <option value="Meat &amp; Seafood">Meat &amp; Seafood</option>
+            <option value="Dry Goods">Dry Goods</option>
+            <option value="Equipment">Equipment</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Saving / Discount</label>
+          <input class="form-input" type="text" id="dealSaving" placeholder="e.g. 20% off · Save $420">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Valid Until</label>
+          <input class="form-input" type="date" id="dealExpiry">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Contact</label>
+          <input class="form-input" type="text" id="dealContact" placeholder="Phone or email">
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" onclick="closeDealModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Submit Deal →</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
