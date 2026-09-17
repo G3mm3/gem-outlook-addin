@@ -196,7 +196,6 @@ GEM'S WRITING STYLE (learned from her real sent emails):
 - Sometimes refers to competitors helpfully (e.g. Cactus Canning for things she can't do)
 - Often asks questions at the end to keep conversation moving
 - Signs off: "Cheers, Gem" ALWAYS (never "Gemma", never "Kind regards", never "Best")
-- Signature block: Gemma Duff | Head of Customer Team | 1300 494 994 | 0491 203 767 | eastcoastcanning.com.au
 
 TONE VARIATIONS:
 - Natural (default): casual, warm, Gem's real voice
@@ -208,8 +207,24 @@ RULES:
 - Write ONLY the email body from greeting to signature
 - Never add subject lines or preamble
 - Never write "I hope this email finds you well" or any filler
-- Always end with Cheers, Gem + signature
+- Always end with Cheers, Gem (the signature block is appended automatically — do not write it)
 - If you don't know a specific detail, write a plausible response and note [CHECK THIS]`;
+
+const GEM_SIGNATURE_HTML = `
+<div style="font-family:Arial,sans-serif;font-size:13px;color:#1a1a1a;margin-top:18px;padding-top:12px;border-top:1px solid #e0e0e0;">
+  <p style="margin:0 0 3px 0;"><strong>Gemma Duff</strong></p>
+  <p style="margin:0 0 3px 0;"><span style="color:#00a0a0;">1300 494 994</span> | 0491 203 767</p>
+  <p style="margin:0 0 10px 0;"><a href="https://eastcoastcanning.com.au/" style="color:#00a0a0;text-decoration:none;">eastcoastcanning.com.au</a></p>
+  <p style="margin:0 0 6px 0;"><a href="https://eastcoastcanning.com.au/"><img src="https://order.eastcoastcanning.com.au/eastcoastcanningAU/assets/logoresized.png" alt="East Coast Canning + Printing" style="display:block;" /></a></p>
+  <p style="margin:0 0 8px 0;"><a href="https://eastcoastcanning.com.au/bulletproof/"><img src="https://order.eastcoastcanning.com.au/eastcoastcanningAU/assets/bulletproofbannerresized.png" alt="The World's Toughest Digitally Printed Can Is Here" style="display:block;" /></a></p>
+  <table cellpadding="0" cellspacing="3" style="border-collapse:separate;">
+    <tr><td><a href="https://order.eastcoastcanning.com.au/"><img src="https://order.eastcoastcanning.com.au/eastcoastcanningAU/assets/placeorderresized.png" alt="Place Order" style="display:block;" /></a></td></tr>
+    <tr><td><a href="https://eastcoastcanning.com.au/change-of-order-form/"><img src="https://order.eastcoastcanning.com.au/eastcoastcanningAU/assets/changeorderresized.png" alt="Change Order" style="display:block;" /></a></td></tr>
+    <tr><td><a href="https://eastcoastcanning.com.au/faqs/"><img src="https://order.eastcoastcanning.com.au/eastcoastcanningAU/assets/faqresized.png" alt="FAQs" style="display:block;" /></a></td></tr>
+    <tr><td><a href="https://eastcoastcanning.com.au/resource/can-templates/"><img src="https://order.eastcoastcanning.com.au/eastcoastcanningAU/assets/arttemplatesresized.png" alt="Artwork Templates" style="display:block;" /></a></td></tr>
+    <tr><td><a href="https://eastcoastcanning.com.au/about/"><img src="https://order.eastcoastcanning.com.au/eastcoastcanningAU/assets/ourstoryresized.png" alt="Our Story" style="display:block;" /></a></td></tr>
+  </table>
+</div>`;
 
 let currentTone = "natural";
 let currentEmail = null;
@@ -352,7 +367,7 @@ ${currentEmail.body.substring(0, 2000)}`;
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-haiku-4-5-20251001',
         max_tokens: 600,
         system: GEM_SYSTEM_PROMPT,
         messages: [{ role: 'user', content: userPrompt }]
@@ -396,7 +411,7 @@ function insertDraft() {
   if (!text || !Office.context.mailbox.item) return;
 
   Office.context.mailbox.item.displayReplyForm({
-    htmlBody: text.replace(/\n/g, '<br>')
+    htmlBody: text.replace(/\n/g, '<br>') + GEM_SIGNATURE_HTML
   });
 }
 </script>
